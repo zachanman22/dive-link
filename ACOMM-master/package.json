@@ -1,0 +1,24 @@
+{
+  "name": "acomm-arduino",
+  "version": "0.1.0",
+  "description": "ACOMM library for FSK modulation and demodulation ",
+  "main": "ACOMM.cpp",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/scottmayberry/ACOMM.git"
+  },
+  "keywords": [
+    "arduino-library"
+  ],
+  "author": "Scott Mayberry",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/scottmayberry/ACOMM/issues"
+  }
+}

@@ -1,0 +1,14 @@
+ACOMM   KEYWORD1
+
+getNumChannels  KEYWORD2
+getCurrentChannel   KEYWORD2
+setMARY KEYWORD2
+setChannel  KEYWORD2
+addSample   KEYWORD2
+
+detectStartOfMessageAboveThreshold  KEYWORD2
+getSymbolAsByte KEYWORD2
+convertSymbolAsByteToBitArray   KEYWORD2
+
+getFreqMicroSecondsFromSymbol   KEYWORD2
+getFreqFromSymbol   KEYWORD2
