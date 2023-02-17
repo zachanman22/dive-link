@@ -1,5 +1,5 @@
-data_mat_filename = 'data.mat';
-data_mat = load(data_mat_filename);
+data_mat_filename = 'data.mat'
+data_mat = load(data_mat_file);
 data = data_mat.data;
 
 figure(1)
@@ -31,8 +31,8 @@ target_f_2 = 60000;
 % target_f_2_zc = 2 * target_f_2 / fs * window_len;
 
 % Data to provide to spectrogram if slicing needed
-% data_to_spec = data.Channel1V(2000:32000);
-data_to_spec = data.Channel1V;
+data_to_spec = data.Channel1V(2000:32000);
+% data_to_spec = data.Channel1V;
 
 % Determine which frequency bins the target frequencies are in
 target_bin_1 = int32(target_f_1 / bin_width);
