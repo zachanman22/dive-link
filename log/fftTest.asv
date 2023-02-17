@@ -1,6 +1,13 @@
-data_mat_filename = 'data.mat'
-data_mat = load(data_mat_file);
-data = data_mat.data;
+% For csv data
+csv_filename = 'g.csv';
+data = readtable(csv_filename);
+data.Properties.VariableNames{1} = 'Times';
+data.Properties.VariableNames{2} = 'Channel1V';
+
+% % For mat data
+% data_mat_filename = 'data.mat';
+% data_mat = load(data_mat_filename);
+% data = data_mat.data;
 
 figure(1)
 % Plot wrt time
@@ -10,12 +17,12 @@ plot(data.Channel1V)
 
 % Determine bit time based on length of time each bit is sent for
 % Noticed a pattern of bit times of 2 ms instead of 2.5 ms
-bit_time = 2e-3;
+bit_time = 1e-3;
 % Sampling rate based on oscilloscope ADC rate
-fs = 2e6;
+fs = 2.9762e6;
 
 % Window len is number of samples per bit period
-window_len = fs * bit_time;
+window_len = int32(fs * bit_time);
 % Frequency width of each bin in Hz
 bin_width = fs / window_len;
 % Search adjacent bins in case the target frequencies are shifted
@@ -23,16 +30,16 @@ search_bin_radius = 6;
 
 
 % Set target frequencies of FSK
-target_f_1 = 45000;
-target_f_2 = 60000;
+target_f_1 = 43000;
+target_f_2 = 59000;
 
 % % Zero crossing (experimental)
 % target_f_1_zc = 2 * target_f_1 / fs * window_len;
 % target_f_2_zc = 2 * target_f_2 / fs * window_len;
 
 % Data to provide to spectrogram if slicing needed
-data_to_spec = data.Channel1V(2000:32000);
-% data_to_spec = data.Channel1V;
+% data_to_spec = data.Channel1V(2000:32000);
+data_to_spec = data.Channel1V;
 
 % Determine which frequency bins the target frequencies are in
 target_bin_1 = int32(target_f_1 / bin_width);

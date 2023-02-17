@@ -1,6 +1,6 @@
 % For csv data
-csv_filename = 'data.csv';
-data = readtable(csv_filename);
+csv_filename = '3freq.csv';
+data = readtable(csv_filename, 'NumHeaderLines', 11);
 data.Properties.VariableNames{1} = 'Times';
 data.Properties.VariableNames{2} = 'Channel1V';
 
@@ -17,21 +17,22 @@ plot(data.Channel1V)
 
 % Determine bit time based on length of time each bit is sent for
 % Noticed a pattern of bit times of 2 ms instead of 2.5 ms
-bit_time = 2e-3;
+bit_time = 1e-3;
 % Sampling rate based on oscilloscope ADC rate
-fs = 2e6;
+fs = 2.9762e6;
 
 % Window len is number of samples per bit period
-window_len = fs * bit_time;
+window_len = int32(fs * bit_time);
 % Frequency width of each bin in Hz
 bin_width = fs / window_len;
 % Search adjacent bins in case the target frequencies are shifted
-search_bin_radius = 6;
+search_bin_radius = 3;
 
 
 % Set target frequencies of FSK
-target_f_1 = 45000;
-target_f_2 = 60000;
+target_f_1 = 43000;
+target_f_2 = 59000;
+start_f = 37000;
 
 % % Zero crossing (experimental)
 % target_f_1_zc = 2 * target_f_1 / fs * window_len;
@@ -44,6 +45,10 @@ data_to_spec = data.Channel1V;
 % Determine which frequency bins the target frequencies are in
 target_bin_1 = int32(target_f_1 / bin_width);
 target_bin_2 = int32(target_f_2 / bin_width);
+start_bin_f = int32(start_f / bin_width);
+
+[s, w, t] = spectrogram(data_to_spec, window_len, 0, window_len, fs, 'yaxis');
+
 
 % Spectrogram is FFT over time, and we want FFTs of each frame through time
 % Spectrogram with window length as determined previously and 0 overlap
