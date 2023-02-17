@@ -1,6 +1,13 @@
-data_mat_filename = 'data.mat';
-data_mat = load(data_mat_filename);
-data = data_mat.data;
+% For csv data
+csv_filename = 'data.csv';
+data = readtable(csv_filename);
+data.Properties.VariableNames{1} = 'Times';
+data.Properties.VariableNames{2} = 'Channel1V';
+
+% % For mat data
+% data_mat_filename = 'data.mat';
+% data_mat = load(data_mat_filename);
+% data = data_mat.data;
 
 figure(1)
 % Plot wrt time
