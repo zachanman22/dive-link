@@ -38,8 +38,6 @@ start_f = 37000;
 % target_f_1_zc = 2 * target_f_1 / fs * window_len;
 % target_f_2_zc = 2 * target_f_2 / fs * window_len;
 
-% Data to provide to spectrogram if slicing needed
-% data_to_spec = data.Channel1V(2000:32000);
 data_to_spec = data.Channel1V;
 
 % Determine which frequency bins the target frequencies are in
@@ -47,8 +45,28 @@ target_bin_1 = int32(target_f_1 / bin_width);
 target_bin_2 = int32(target_f_2 / bin_width);
 start_bin_f = int32(start_f / bin_width);
 
-[s, w, t] = spectrogram(data_to_spec, window_len, 0, window_len, fs, 'yaxis');
+s = spectrogram(data_to_spec, window_len, 0, window_len, fs, 'yaxis');
+s = s(start_bin_f - search_bin_radius:start_bin_f + search_bin_radius, :);
+s = abs(s);
+% Get maximums over freqs dim
+s_max_w = max(s);
+% Get max index over the time from maxs over freqs
+[s_max_t, t_bin_index] = max(s_max_w);
+starting_data_index = window_len * t_bin_index;
+data_to_spec = data_to_spec(starting_data_index:end);
 
+% BPF data to eliminate noise
+data_to_spec = bandpass(data_to_spec,[min([start_f, target_f_1, target_f_2]) - search_bin_radius * bin_width, ...
+                                      max([start_f, target_f_1, target_f_2]) + search_bin_radius * bin_width],fs);
+
+% Can count zero crossings at a dc level to estimate the frequency
+% Zero cross count ~= 2 * freq * bit_time
+offset = 4;
+dc = 0;
+zero_count = zc_count(data_to_spec(window_len * offset + 1:window_len * (offset + 1)), dc);
+
+figure(4)
+plot(data_to_spec)
 
 % Spectrogram is FFT over time, and we want FFTs of each frame through time
 % Spectrogram with window length as determined previously and 0 overlap
@@ -64,9 +82,6 @@ spectrogram(data_to_spec, window_len, 0, window_len, fs, 'yaxis')
 s = abs(s);
 % Number of frequency bins
 num_w_bins = size(w, 1);
-% Filters to just 0-100kHz for a fs of 2 MHz
-s = s(1:int32(num_w_bins/10), :);
-w = w(1:int32(num_w_bins/10));
 
 figure(3)
 waterfall(t,w,s)
@@ -91,19 +106,13 @@ for i = 1:size(bits,2)
     bits(i) = target_1_max < target_2_max;
 end
 
-% % For zero crossing (experimental)
-% dc = 4;
-
 % Define offset
 offset = 9900;
-figure(4)
+figure(5)
 % Plot 1 frame starting from a particular offset
 plot(data.Channel1V(1+offset:window_len+offset));
 % FFT amplitudes
 amps = fft(data.Channel1V(1+offset:window_len+offset));
-
-% % Zero cross (experimental)
-% zero_cross = zc_count(data.Channel1V(1+offset:window_len+offset), dc);
 
 N = size(amps, 1);
 
