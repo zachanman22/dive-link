@@ -1,5 +1,5 @@
 % For csv data
-csv_filename = '32byteFrameFull';
+csv_filename = 'elapsedTestFull';
 data = readtable(csv_filename, 'NumHeaderLines', 11);
 data.Properties.VariableNames{1} = 'Times';
 data.Properties.VariableNames{2} = 'Channel1V';
@@ -21,7 +21,7 @@ plot(data.Channel1V)
 bit_time = 1e-3;
 
 % Sampling rate based on oscilloscope ADC rate
-fs = 515464;
+fs = 519751;
 
 % Window len is number of samples per bit period
 window_len = int32(fs * bit_time);
@@ -29,6 +29,8 @@ window_len = int32(fs * bit_time);
 bin_width = fs / window_len;
 % Search adjacent bins in case the target frequencies are shifted
 search_bin_radius = 3;
+
+peak_threshold = 20;
 
 
 % Set target frequencies of FSK
@@ -40,7 +42,6 @@ target_f_2 = 120000;
 % target_f_2_zc = 2 * target_f_2 / fs * window_len;
 
 data_to_spec = data.Channel1V;
-
 
 % Determine which frequency bins the target frequencies are in
 target_bin_1 = int32(target_f_1 / bin_width);
@@ -73,7 +74,8 @@ start_index = 1;
 
 bits = double.empty;
 while size(data_to_spec,1) > window_len * byte_size
-    start_index = find_start_index(data_to_spec, window_len, 4);
+    start_index = find_start_index(data_to_spec, window_len, 4, fs, target_f_1, search_bin_radius, peak_threshold);
+    start_index
 
     if size(data_to_spec,1) - start_index > window_len * byte_size
         for i = 1:byte_size
@@ -89,7 +91,7 @@ while size(data_to_spec,1) > window_len * byte_size
             freqs = (0:N/2) * fs/N;
             freqs = freqs(1:int32(N/2));
 
-            plot(freqs(1:N/4), amps(1:N/4))
+%             plot(freqs(1:N/4), amps(1:N/4))
         
             % Max within search region of target frequency 1
             target_1_max = max(amps(target_bin_1 - search_bin_radius: ...
@@ -153,15 +155,30 @@ function count = zc_count(arr, dc)
     end
 end
 
-function shift_count = find_start_index(data, window_len, window_factor)
+function shift_count = find_start_index(data, window_len, window_factor, fs, search_freq, search_bin_radius, peak_threshold)
     signal_square_avg = mean(data.^2);
     window_square_avg = signal_square_avg;
-    next_window_square_avg = signal_square_avg - 1;
+    next_window_0_peak = 0;
     shift_count = 1;
     search_window_len = int32(window_len / window_factor);
-    while ~(window_square_avg <= signal_square_avg && next_window_square_avg >= signal_square_avg)  && shift_count < size(data,1) - search_window_len - 1
+    while ~(window_square_avg <= signal_square_avg && next_window_0_peak >= peak_threshold)  && shift_count < size(data,1) - search_window_len - 1
         window_square_avg = mean(data(shift_count:shift_count + search_window_len).^2);
-        next_window_square_avg = mean(data(shift_count+1:shift_count + 1 + search_window_len).^2);
+        amps = fft(data(shift_count+1:shift_count + 1 + search_window_len));
+        amps = abs(amps);
+
+        bin_width = fs / search_window_len;
+        zero_freq_bin = int32(search_freq / bin_width);
+%         zero_freq_bin = int32(zero_freq_bin * window_factor);
+%         zero_freq_bin
+        
+        N = size(amps, 1);
+        % 1 sided FFT (positive freqs only)
+        amps = amps(1:int32(N/2) + 1);
+        amps = amps(1:int32(N/2));
+
+        next_window_0_peak = max(amps(zero_freq_bin - search_bin_radius: ...
+            zero_freq_bin + search_bin_radius));
+%         next_window_square_avg = mean(data(shift_count+1:shift_count + 1 + search_window_len).^2);
         shift_count = shift_count + 1;
     end
 end
