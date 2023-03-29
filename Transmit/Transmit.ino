@@ -13,6 +13,7 @@
 #define CLK   13	///< SPI Clock pin number
 #define FSYNC 10	///< SPI Load pin number (FSYNC in AD9833 usage)
 // MD_AD9833	AD(DATA, CLK, FSYNC); // Arbitrary SPI pin
+MD_AD9833   AD(FSYNC);  // Hardware SPI
 
 int frequency_high = 120000;   //  Frequency when sending a 1
 int frequency_low = 70000;    //  Frequency when sending a 0
@@ -25,11 +26,11 @@ const int msglen = frame_size - ecclen; //  Amount of message bytes in the frame
 char frame[frame_size];       //  Allocating space for the frame
 char message_container[msglen]; //  Allocating space for the message
 
-int bit_speed = 1000; //  Amount of time to hold a bit frequency in microseconds
+int bit_speed = 10000; //  Amount of time to hold a bit frequency in microseconds
 int frame_delay = bit_speed * frame_size * 8; // Amount of time to wait for a full frame to send
 int guard_time = frame_delay/2; // Guard time to prevent overlap
 int number_of_transmitters = 2; // Number of transmitters in TDMA
-int transmit_id = 1;            // ID of this transmitter
+int transmit_id = 0;            // ID of this transmitter
 int transmit_time = 0;
 
 
@@ -52,7 +53,6 @@ void setup(void)
   digitalWrite(8, LOW);
   
   // Set up serial and function generator
-    MD_AD9833   AD(FSYNC);  // Hardware SPI
 	AD.begin();
   AD.setMode(MD_AD9833::MODE_SINE);
   AD.setActiveFrequency(MD_AD9833::CHAN_0);
@@ -110,7 +110,7 @@ void loop(void)
 
       //Stop transmitting
       digitalWrite(8, LOW);
-      //AD.setFrequency(MD_AD9833::CHAN_0,1000);
+      AD.setFrequency(MD_AD9833::CHAN_0,1000);
 
     // If it is not this sender's turn
     } else {
@@ -124,30 +124,30 @@ void loop(void)
       // the error correction must run again in order for it to work properly again.
 
       // Fills the message container with filler character
-//      for(int i = 0; i < sizeof(message_container); i++){
-//        message_container[i] = filler;
-//      }
-//
-//      // Fills the ID and Time fields
-//      message_container[0] = transmit_id + 1;
-//      message_container[1] = (transmit_time % 255) + 1;
-//
-//      // Fills in the message
-//      for(int i = 2; i < sizeof(message) - 1; i++){
-//        message_container[i] = message[i];
-//      }
-//      message_container[sizeof(message_container) - 1] = '\0';
-//
-//      // Encode the message and put it into the encoded container
-//      rs.Encode(message_container, encoded);
-//
-//      // Move the zero byte between the message and ecc to the end and shift the ecc up
-//      for(int i = msglen; i < sizeof(encoded); i++){
-//        encoded[i-1] = encoded[i];
-//      }
-//      encoded[sizeof(encoded)-1] = '\0';
-//
-//      while(sendBlankFrame < frame_delay);
+      for(int i = 0; i < sizeof(message_container); i++){
+        message_container[i] = filler;
+      }
+
+      // Fills the ID and Time fields
+      message_container[0] = transmit_id + 1;
+      message_container[1] = (transmit_time % 255) + 1;
+
+      // Fills in the message
+      for(int i = 2; i < sizeof(message) - 1; i++){
+        message_container[i] = message[i];
+      }
+      message_container[sizeof(message_container) - 1] = '\0';
+
+      // Encode the message and put it into the encoded container
+      rs.Encode(message_container, encoded);
+
+      // Move the zero byte between the message and ecc to the end and shift the ecc up
+      for(int i = msglen; i < sizeof(encoded); i++){
+        encoded[i-1] = encoded[i];
+      }
+      encoded[sizeof(encoded)-1] = '\0';
+
+      while(sendBlankFrame < frame_delay);
     }
 
     // Increment the time counter
@@ -159,10 +159,10 @@ void send_integer(int character, int num_bits){
   for(int i = (num_bits - 1); i >= 0; i--){
     send_high = (character >> i) & 0X01;
     if(send_high){
-      //AD.setFrequency(MD_AD9833::CHAN_0,frequency_high);
+      AD.setFrequency(MD_AD9833::CHAN_0,frequency_high);
       //Serial.print("1");
     } else {
-      //AD.setFrequency(MD_AD9833::CHAN_0,frequency_low);
+      AD.setFrequency(MD_AD9833::CHAN_0,frequency_low);
       //Serial.print("0");
     }
     while(sendBit < bit_speed);
