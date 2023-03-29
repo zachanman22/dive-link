@@ -1,5 +1,5 @@
 % For csv data
-csv_filename = 'elapsedTestFull';
+csv_filename = 'elapsedTestFull.csv';
 data = readtable(csv_filename, 'NumHeaderLines', 11);
 data.Properties.VariableNames{1} = 'Times';
 data.Properties.VariableNames{2} = 'Channel1V';
@@ -14,6 +14,10 @@ figure(1)
 % plot(data.Times, data.Channel1V)
 % Plot wrt index
 plot(data.Channel1V)
+title("Raw Signal of Letter G")
+xlabel("Sample Number")
+ylabel("Volts (V)")
+
 
 
 % Determine bit time based on length of time each bit is sent for
@@ -28,18 +32,14 @@ window_len = int32(fs * bit_time);
 % Frequency width of each bin in Hz
 bin_width = fs / window_len;
 % Search adjacent bins in case the target frequencies are shifted
-search_bin_radius = 3;
+search_bin_radius = 1;
 
-peak_threshold = 20;
+peak_threshold = 50;
 
 
 % Set target frequencies of FSK
 target_f_1 = 70000;
 target_f_2 = 120000;
-
-% % Zero crossing (experimental)
-% target_f_1_zc = 2 * target_f_1 / fs * window_len;
-% target_f_2_zc = 2 * target_f_2 / fs * window_len;
 
 data_to_spec = data.Channel1V;
 
@@ -49,16 +49,6 @@ target_bin_2 = int32(target_f_2 / bin_width);
 
 
 bit_points = (1:window_len:size(data_to_spec,1)).';
-
-% BPF data to eliminate noise
-% data_to_spec = bandpass(data_to_spec,[min([start_f, target_f_1, target_f_2]) - search_bin_radius * bin_width, ...
-%                                       max([start_f, target_f_1, target_f_2]) + search_bin_radius * bin_width],fs);
-
-% Can count zero crossings at a dc level to estimate the frequency
-% Zero cross count ~= 2 * freq * bit_time
-offset = 0 + 0*window_len;
-dc = 0.10;
-zero_count = zc_count(data_to_spec(offset + 1:window_len + offset), dc);
 
 figure(4)
 hold on
@@ -118,7 +108,7 @@ data_to_spec = data.Channel1V;
 
 
 % Define offset
-offset = 22903;
+offset = 1;
 % offset = 0 + window_len;
 figure(5)
 % Plot 1 frame starting from a particular offset
@@ -140,29 +130,15 @@ freqs = freqs(1:int32(N/2));
 figure(6)
 % Plot FFT magnitude in db
 plot(freqs,abs(amps))
-
-% Function of zero crossing count (experimental)
-function count = zc_count(arr, dc)
-    count = 0;
-    for i = 2:size(arr, 1)
-        if (arr(i) > dc && arr(i - 1) < dc) || (arr(i) < dc && arr(i - 1) > dc)
-            if abs(arr(i) - arr(i - 1)) > 0
-                arr(i)
-                arr(i - 1)
-                count = count + 1;
-            end
-        end
-    end
-end
+title("FFT of Zero Bit")
+xlabel("Frequency (Hz)")
+ylabel("Amplitude (linear)")
 
 function shift_count = find_start_index(data, window_len, window_factor, fs, search_freq, search_bin_radius, peak_threshold)
-    signal_square_avg = mean(data.^2);
-    window_square_avg = signal_square_avg;
     next_window_0_peak = 0;
-    shift_count = 1;
+    shift_count = 0;
     search_window_len = int32(window_len / window_factor);
-    while ~(window_square_avg <= signal_square_avg && next_window_0_peak >= peak_threshold)  && shift_count < size(data,1) - search_window_len - 1
-        window_square_avg = mean(data(shift_count:shift_count + search_window_len).^2);
+    while ~(next_window_0_peak >= peak_threshold) && shift_count < size(data,1) - search_window_len - 1
         amps = fft(data(shift_count+1:shift_count + 1 + search_window_len));
         amps = abs(amps);
 
