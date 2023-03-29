@@ -15,17 +15,16 @@
 MD_AD9833  AD(FSYNC);  // Hardware SPI
 // MD_AD9833  AD(DATA, CLK, FSYNC); // Arbitrary SPI pins
 
-int frequency_high = 12000;
-int frequency_low = 50000;
-int begin_transmit = 170000;
+int frequency_high = 120000;
+int frequency_low = 70000;
 
 int num_transmit = 2;
 int id_transmit = 1;
 
-int bit_speed = 500;
+int bit_speed = 1000;
 int guard_band = bit_speed * 4;
 
-char character = 'E';
+char character = 'G';
 int send_high;
 int message_index;
 
@@ -46,8 +45,8 @@ void loop(void)
 {
   for(int i = 0; i < num_transmit; i++){
     if(i == id_transmit){
-      send_integer(character, 7);
-      AD.setFrequency(MD_AD9833::CHAN_0,0);
+      send_integer(character, 8);
+      AD.setFrequency(MD_AD9833::CHAN_0,1000);
     } else {
       delayMicroseconds(bit_speed * 8);
     }
@@ -56,9 +55,6 @@ void loop(void)
 }
 
 void send_integer(int character, int num_bits){
-  AD.setFrequency(MD_AD9833::CHAN_0,begin_transmit);
-  //Serial.print('S');
-  delayMicroseconds(bit_speed);
   for(int i = (num_bits - 1); i >= 0; i--){
     send_high = (character >> i) & 0X01;
     if(send_high){
