@@ -26,7 +26,8 @@ const int msglen = frame_size - ecclen; //  Amount of message bytes in the frame
 char frame[frame_size];       //  Allocating space for the frame
 char message_container[msglen]; //  Allocating space for the message
 
-int bit_speed = 10000; //  Amount of time to hold a bit frequency in microseconds
+int baud_rate = 25;
+int bit_speed = int(1000000/baud_rate); //  Amount of time to hold a bit frequency in microseconds
 int frame_delay = bit_speed * frame_size * 8; // Amount of time to wait for a full frame to send
 int guard_time = frame_delay/2; // Guard time to prevent overlap
 int number_of_transmitters = 2; // Number of transmitters in TDMA
@@ -102,6 +103,7 @@ void loop(void)
   if(transmit_time % number_of_transmitters == transmit_id){
 
     // Send each byte of the sending_encoded
+    Serial.println("Sending");
     digitalWrite(8, HIGH);
     sendBit = 0;
     for(int i = 0; i < sizeof(encoded); i++){
@@ -111,6 +113,7 @@ void loop(void)
       //Stop transmitting
       digitalWrite(8, LOW);
       AD.setFrequency(MD_AD9833::CHAN_0,1000);
+      Serial.println("Stopping");
 
     // If it is not this sender's turn
     } else {

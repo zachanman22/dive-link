@@ -141,9 +141,9 @@ void ACOMM_FHFSK::addSampleForActiveMessage(float adjustedSample, int k)
         for (int j = 0; j < binsPerFrequency; j++)
         {
             // Serial.println(tempBinIndex);
-            
+            //Serial.println(adjustedSample);
             g[k][fh_index[k]][i][j].addSample(adjustedSample);
-            Serial.println(g[k][fh_index[k]][i][j].calcMagnitudeSquared());
+            //Serial.println(g[k][fh_index[k]][i][j].detect());
         }
     }
     // increase sample number for this message
@@ -186,6 +186,7 @@ bool ACOMM_FHFSK::isMessageInProgress()
 void ACOMM_FHFSK::addSample(int sample, int sampleNumberCounter)
 {
     // normalize sample between [-1,1]
+    //Serial.println(sample);
     float adjustedSample = float(sample - ADCCENTER) / (ADCCENTER);
     // Serial.println(adjustedSample);
 
@@ -228,15 +229,17 @@ void ACOMM_FHFSK::checkHasMessageStartedWithSetDelay(int sampleNumberCounter)
             if (messagesActive[k] == 0 && sampleNumber[k] >= slidingDetectionWindowSize)
             {
                 // calculate purity for the first pair of Frequency Hopping with the largest symbol
-                purity = g[k][0][number_of_symbols - 1][plusMinusBins].detectBatch(sdwindow, slidingDetectionWindowSize, sdwindowIndex) * 10000;
+                purity = g[k][0][0][plusMinusBins].detectBatch(sdwindow, slidingDetectionWindowSize, sdwindowIndex) * 10000;
                 break;
             }
         }
         if (purity > startMessageThresholds[0])
         {
+          Serial.println(purity);
             for (int k = 0; k < messageNumberToSwitchToDelay; k++)
                 if (messagesActive[k] == 0 && purity >= startMessageThresholds[k])
                 {
+                    Serial.printf("Message %d has started\n", k);
                     sampleNumberRecorder[k] = sampleNumberCounter;
                     messagesActive[k] = 1; // 1 is message active
                     latestActiveMessage = k;
@@ -439,12 +442,15 @@ byte ACOMM_FHFSK::getSymbolFromPurityPerSymbol()
 {
     byte symbol_in = 0;
     float maxPurity = purityPerSymbol[0];
-    for (int i = 1; i < number_of_symbols; i++)
+    //Serial.printf("0 has purity %f\n", purityPerSymbol[0]);
+    //Serial.printf("1 has purity %f\n", purityPerSymbol[1]);
+    for (int i = 1; i < number_of_symbols; i++){
         if (purityPerSymbol[i] > maxPurity)
         {
             maxPurity = purityPerSymbol[i];
             symbol_in = i;
         }
+    }
     return symbol_in;
 }
 

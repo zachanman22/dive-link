@@ -5,7 +5,7 @@
 #include "ACOMM_FHFSK.h"
 #include <ArduinoJson.h>
 #include <SPI.h>
-#include <MCP49xx.h>
+#include "DAC_MCP49XX.h"
 //#include <Entropy.h>
 #include "sdios.h"
 
@@ -17,7 +17,7 @@
 #define g1 7
 #define g2 6
 
-int baudRate = 200;
+int baudRate = 25;
 /*
     | g2 | g1 | g0 | value |
     |  0 |  0 |  0 |   0   |
@@ -42,7 +42,7 @@ const uint8_t LTC2315_shift = 1;
 const float LTC2315_vref = 4.096;
 
 /////////////////////////fhfsk out/////////////////////////
-MCP49xx dac(MCP49xx::MCP4921, dac_cs_pin);
+DAC_MCP49xx dac(DAC_MCP49xx::MCP4921, dac_cs_pin);
 
 uint16_t messageSymbolSize;                              // tracks the number of symbols to modulate
 byte symbolValueOfMessage[MESSAGE_MAXIMUM_SYMBOL_SIZE];  // encoded symbols to modulate
