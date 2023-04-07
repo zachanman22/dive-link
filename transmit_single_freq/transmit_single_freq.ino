@@ -15,7 +15,7 @@
 MD_AD9833   AD(FSYNC);  // Hardware SPI
 
 int frequency_high = 104000;   //  Frequency when sending a 1
-int frequency_low = 62000;    //  Frequency when sending a 0
+int frequency_low = 83000;    //  Frequency when sending a 0
 
 void setup(void)
 {
