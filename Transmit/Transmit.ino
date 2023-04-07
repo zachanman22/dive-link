@@ -15,10 +15,10 @@
 // MD_AD9833	AD(DATA, CLK, FSYNC); // Arbitrary SPI pin
 MD_AD9833   AD(FSYNC);  // Hardware SPI
 
-int frequency_high = 120000;   //  Frequency when sending a 1
-int frequency_low = 70000;    //  Frequency when sending a 0
+int frequency_high = 80000;   //  Frequency when sending a 1
+int frequency_low = 60000;    //  Frequency when sending a 0
 char message[] = "G";         //  Message to transmit
-char filler = 'G';
+char filler = 0;
 
 const int frame_size = 32;   //  Amount of Bytes in the frame
 const int ecclen = 8;         //  Amount of redundancy
@@ -26,8 +26,8 @@ const int msglen = frame_size - ecclen; //  Amount of message bytes in the frame
 char frame[frame_size];       //  Allocating space for the frame
 char message_container[msglen]; //  Allocating space for the message
 
-int baud_rate = 25;
-int bit_speed = int(1000000/baud_rate); //  Amount of time to hold a bit frequency in microseconds
+int baud_rate = 200;
+int bit_speed = int(1000000/float(baud_rate)); //  Amount of time to hold a bit frequency in microseconds
 int frame_delay = bit_speed * frame_size * 8; // Amount of time to wait for a full frame to send
 int guard_time = frame_delay/2; // Guard time to prevent overlap
 int number_of_transmitters = 2; // Number of transmitters in TDMA
@@ -37,6 +37,7 @@ int transmit_time = 0;
 
 char encoded[msglen + ecclen];  // Buffer for the encoded message
 int send_high;    // Varible used to send bits over the communication
+int send_high_prev;
 
 elapsedMicros sendBit;  // Timer used for sending one bit
 elapsedMicros guardBand;  // Timer used for waiting for guard band
@@ -57,6 +58,7 @@ void setup(void)
 	AD.begin();
   AD.setMode(MD_AD9833::MODE_SINE);
   AD.setActiveFrequency(MD_AD9833::CHAN_0);
+  //AD.setFrequency(MD_AD9833::CHAN_0,120000);
   Serial.begin(115200);
 
   // Initialize the reed solomon encoding
@@ -65,24 +67,33 @@ void setup(void)
   // Set the first character to the transmit_id
   // Then move the message into the container
   // Finally, set the last byte of the message to 0
-  for(int i = 0; i < sizeof(message_container); i++){
-    message_container[i] = filler;
-  }
-  message_container[0] = transmit_id + 1;
-  message_container[1] = transmit_time + 1;
-  for(int i = 2; i < sizeof(message) - 1; i++){
-    message_container[i] = message[i];
-  }
-  message_container[sizeof(message_container) - 1] = '\0';
+//  for(int i = 0; i < sizeof(message_container); i++){
+//    message_container[i] = filler;
+//  }
+//  message_container[0] = transmit_id + 1;
+//  message_container[1] = transmit_time + 1;
+//  for(int i = 2; i < sizeof(message) - 1; i++){
+//    message_container[i] = message[i];
+//  }
+//  message_container[sizeof(message_container) - 1] = '\0';
+//
+//  // Encode the message and put it into the encoded container
+//  rs.Encode(message_container, encoded);
+//
+//  // Move the zero byte between the message and ecc to the end and shift the ecc up
+//  for(int i = msglen; i < sizeof(encoded); i++){
+//    encoded[i-1] = encoded[i];
+//  }
+//  encoded[sizeof(encoded)-1] = '\0';
+//  encoded[0] = encoded[0]+128;
 
-  // Encode the message and put it into the encoded container
-  rs.Encode(message_container, encoded);
-
-  // Move the zero byte between the message and ecc to the end and shift the ecc up
-  for(int i = msglen; i < sizeof(encoded); i++){
-    encoded[i-1] = encoded[i];
+  for(int i = 0; i < sizeof(encoded); i++){
+    encoded[i] = 0;
   }
-  encoded[sizeof(encoded)-1] = '\0';
+  encoded[0] = 128;
+  encoded[15] = 255;
+  encoded[16] = 255;
+  send_high_prev = 2;
 
 
   // Wait for button push
@@ -112,8 +123,9 @@ void loop(void)
 
       //Stop transmitting
       digitalWrite(8, LOW);
-      AD.setFrequency(MD_AD9833::CHAN_0,1000);
-      Serial.println("Stopping");
+      //AD.setFrequency(MD_AD9833::CHAN_0,1000);
+      Serial.println("Stopping\n");
+      send_high_prev = 2;
 
     // If it is not this sender's turn
     } else {
@@ -126,29 +138,43 @@ void loop(void)
       // and eight bytes for error correction. This added byte for time changes every send, thus
       // the error correction must run again in order for it to work properly again.
 
-      // Fills the message container with filler character
-      for(int i = 0; i < sizeof(message_container); i++){
-        message_container[i] = filler;
+      //Fills the message container with filler character
+//      for(int i = 0; i < sizeof(message_container); i++){
+//        message_container[i] = filler;
+//      }
+//      // Fills the ID and Time fields
+//      message_container[0] = transmit_id + 1;
+//      message_container[1] = (transmit_time % 255) + 1;
+//
+//      // Fills in the message
+//      for(int i = 2; i < sizeof(message) - 1; i++){
+//        message_container[i] = message[i];
+//      }
+//      message_container[15] = 255;
+//      message_container[16] = 255;
+//      message_container[sizeof(message_container) - 1] = '\0';
+//
+//      // Encode the message and put it into the encoded container
+//      rs.Encode(message_container, encoded);
+//
+//      // Move the zero byte between the message and ecc to the end and shift the ecc up
+//      for(int i = msglen; i < sizeof(encoded); i++){
+//        encoded[i-1] = encoded[i];
+//      }
+//      encoded[sizeof(encoded)-1] = '\0';
+//      encoded[0] = encoded[0]+128;
+
+//      for(int i = 0; i < sizeof(encoded); i++){
+//        encoded[i] = 0;
+//      }
+//      encoded[0] = 128;
+//      encoded[15] = 255;
+//      encoded[16] = 255;
+      
+      for(int i = 0; i < sizeof(encoded); i++){
+        print_message(encoded[i]);
       }
-
-      // Fills the ID and Time fields
-      message_container[0] = transmit_id + 1;
-      message_container[1] = (transmit_time % 255) + 1;
-
-      // Fills in the message
-      for(int i = 2; i < sizeof(message) - 1; i++){
-        message_container[i] = message[i];
-      }
-      message_container[sizeof(message_container) - 1] = '\0';
-
-      // Encode the message and put it into the encoded container
-      rs.Encode(message_container, encoded);
-
-      // Move the zero byte between the message and ecc to the end and shift the ecc up
-      for(int i = msglen; i < sizeof(encoded); i++){
-        encoded[i-1] = encoded[i];
-      }
-      encoded[sizeof(encoded)-1] = '\0';
+      Serial.println(" ");
 
       while(sendBlankFrame < frame_delay);
     }
@@ -161,15 +187,27 @@ void loop(void)
 void send_integer(int character, int num_bits){
   for(int i = (num_bits - 1); i >= 0; i--){
     send_high = (character >> i) & 0X01;
-    if(send_high){
+    if(send_high && send_high_prev != send_high){
       AD.setFrequency(MD_AD9833::CHAN_0,frequency_high);
-      //Serial.print("1");
+      //digitalWrite(8, HIGH);
     } else {
       AD.setFrequency(MD_AD9833::CHAN_0,frequency_low);
-      //Serial.print("0");
+      //digitalWrite(8, LOW);
     }
+    send_high_prev = send_high;
     while(sendBit < bit_speed);
     sendBit = sendBit - bit_speed;
   }
   //Serial.print("\n");
+}
+
+void print_message(int in){
+  for(int i = 7; i >= 0; i--){
+    send_high = (in >> i) & 0X01;
+    if(send_high && send_high_prev != send_high){
+      Serial.print('1');
+    } else {
+      Serial.print('0');
+    }
+  }
 }

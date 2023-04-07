@@ -233,9 +233,9 @@ void ACOMM_FHFSK::checkHasMessageStartedWithSetDelay(int sampleNumberCounter)
                 break;
             }
         }
+        //Serial.println(purity);
         if (purity > startMessageThresholds[0])
         {
-          Serial.println(purity);
             for (int k = 0; k < messageNumberToSwitchToDelay; k++)
                 if (messagesActive[k] == 0 && purity >= startMessageThresholds[k])
                 {
@@ -382,6 +382,8 @@ void ACOMM_FHFSK::addMessagesToJson(DynamicJsonDocument &doc)
     JsonArray data = doc.createNestedArray("d");
     for (int i = 0; i < numberOfGThreads; i++)
     {
+        Serial.print("Symbols in index: ");
+        Serial.println(symbolsInIndex[i]);
         if (messagesActive[i] == 2)
         {
             data.add(symbolsIn[i]);
@@ -427,31 +429,40 @@ void ACOMM_FHFSK::checkForAllMessagesInactive()
 
 bool ACOMM_FHFSK::checkForEndOfMessage(int k)
 {
-    for (int i = 0; i < meanTrackerSize; i++)
-    {
-        if (meanTracker[k][i] > endMessageThreshold)
-        {
-            // Serial.println(meanTracker[k][i]);
-            return false;
-        }
-    }
+  if(symbolsInIndex[k] >= 256){
     return true;
+  }
+  return false;
+//    for (int i = 0; i < meanTrackerSize; i++)
+//    {
+//      //Serial.println(meanTracker[k][i]);
+//        if (meanTracker[k][i] > endMessageThreshold)
+//        {
+//            // Serial.println(meanTracker[k][i]);
+//            return false;
+//        }
+//    }
+//    return true;
 }
 
 byte ACOMM_FHFSK::getSymbolFromPurityPerSymbol()
 {
-    byte symbol_in = 0;
-    float maxPurity = purityPerSymbol[0];
-    //Serial.printf("0 has purity %f\n", purityPerSymbol[0]);
-    //Serial.printf("1 has purity %f\n", purityPerSymbol[1]);
-    for (int i = 1; i < number_of_symbols; i++){
-        if (purityPerSymbol[i] > maxPurity)
-        {
-            maxPurity = purityPerSymbol[i];
-            symbol_in = i;
-        }
-    }
-    return symbol_in;
+  if(purityPerSymbol[0] > 300){
+    return 1;
+  }
+  return 0;
+//    byte symbol_in = 0;
+//    float maxPurity = purityPerSymbol[0];
+//    //Serial.printf("0 has purity %f\n", purityPerSymbol[0]);
+//    //Serial.printf("1 has purity %f\n", purityPerSymbol[1]);
+//    for (int i = 1; i < number_of_symbols; i++){
+//        if (purityPerSymbol[i] > maxPurity)
+//        {
+//            maxPurity = purityPerSymbol[i];
+//            symbol_in = i;
+//        }
+//    }
+//    return symbol_in;
 }
 
 float ACOMM_FHFSK::getUSecondsPerSymbol()

@@ -17,7 +17,7 @@
 #define g1 7
 #define g2 6
 
-int baudRate = 25;
+int baudRate = 200;
 /*
     | g2 | g1 | g0 | value |
     |  0 |  0 |  0 |   0   |
