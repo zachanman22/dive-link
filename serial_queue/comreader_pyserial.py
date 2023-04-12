@@ -5,20 +5,22 @@ from pathlib import Path
 
 if __name__ == '__main__':
     baud = 200
-    sampleKhz = 250
+    sampleKhz = 450
     lower_freq_khz = 60
     upper_freq_khz = 80
     seconds = 10
-    message = '1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    # message = '1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    message = 'all_00111100'
     comPort = 'COM5'
     location = 'lab'
+    note = '00111100'
 
     date = datetime.now().date()
 
-    folderPath = './modem/tests/' + str(location) + '/'+str(date) + str(baud) + '/'+ 'm'
+    folderPath = './modem/tests/' + str(location) + '/'+str(date) +'/'+ str(baud) + '/'+ 'm'
     Path(folderPath).mkdir(parents=True,exist_ok=True)
     
-    fileName =  str(lower_freq_khz) +'_'+str(upper_freq_khz)+ 'k__' + '__sampleK_' + str(sampleKhz) + '_'  + str(round(time.time()))[-6:]
+    fileName =  str(lower_freq_khz) +'_'+str(upper_freq_khz)+ 'k__' + '__sampleK_' + str(sampleKhz) + '_'  + note #str(round(time.time()))[-6:]
 
     readMeName = fileName + "_readme.txt"
     fileName = fileName + ".txt"
@@ -42,7 +44,7 @@ if __name__ == '__main__':
             x = 0
             previousMessage = ''
             listOfStuff = []
-            numberOfMessages = 1500000/7.5*seconds
+            numberOfMessages = 500000*seconds
             ser.read(ser.in_waiting)
             while x < numberOfMessages:
                 newline = ser.read(ser.in_waiting)

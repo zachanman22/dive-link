@@ -17,7 +17,7 @@ MD_AD9833   AD(FSYNC);  // Hardware SPI
 
 int frequency_high = 80000;   //  Frequency when sending a 1
 int frequency_low = 60000;    //  Frequency when sending a 0
-char message[] = "G";         //  Message to transmit
+char message[] = "<";         //  Message to transmit
 char filler = 0;
 
 const int frame_size = 32;   //  Amount of Bytes in the frame
@@ -27,8 +27,8 @@ char frame[frame_size];       //  Allocating space for the frame
 char message_container[msglen]; //  Allocating space for the message
 
 int baud_rate = 200;
-int bit_speed = int(1000000/float(baud_rate)); //  Amount of time to hold a bit frequency in microseconds
-int frame_delay = bit_speed * frame_size * 8; // Amount of time to wait for a full frame to send
+int bit_period = int(1000000/float(baud_rate)); //  Amount of time to hold a bit frequency in microseconds
+int frame_delay = bit_period * frame_size * 8; // Amount of time to wait for a full frame to send
 int guard_time = frame_delay/2; // Guard time to prevent overlap
 int number_of_transmitters = 2; // Number of transmitters in TDMA
 int transmit_id = 0;            // ID of this transmitter
@@ -88,11 +88,14 @@ void setup(void)
 //  encoded[0] = encoded[0]+128;
 
   for(int i = 0; i < sizeof(encoded); i++){
-    encoded[i] = 0;
+    encoded[i] = 60; //<
   }
-  encoded[0] = 128;
-  encoded[15] = 255;
-  encoded[16] = 255;
+//  for(int i = 0; i < 8; i++){
+//    encoded[i] = 0;
+//  }
+//  for(int i = 17; i < 25; i++){
+//    encoded[i] = 0;
+//  }
   send_high_prev = 2;
 
 
@@ -116,6 +119,7 @@ void loop(void)
     // Send each byte of the sending_encoded
     Serial.println("Sending");
     digitalWrite(8, HIGH);
+    delay(1);
     sendBit = 0;
     for(int i = 0; i < sizeof(encoded); i++){
       send_integer(encoded[i], 8);
@@ -171,10 +175,10 @@ void loop(void)
 //      encoded[15] = 255;
 //      encoded[16] = 255;
       
-      for(int i = 0; i < sizeof(encoded); i++){
-        print_message(encoded[i]);
-      }
-      Serial.println(" ");
+//      for(int i = 0; i < sizeof(encoded); i++){
+//        print_message(encoded[i]);
+//      }
+//      Serial.println(" ");
 
       while(sendBlankFrame < frame_delay);
     }
@@ -187,16 +191,21 @@ void loop(void)
 void send_integer(int character, int num_bits){
   for(int i = (num_bits - 1); i >= 0; i--){
     send_high = (character >> i) & 0X01;
-    if(send_high && send_high_prev != send_high){
-      AD.setFrequency(MD_AD9833::CHAN_0,frequency_high);
-      //digitalWrite(8, HIGH);
-    } else {
-      AD.setFrequency(MD_AD9833::CHAN_0,frequency_low);
-      //digitalWrite(8, LOW);
-    }
+    //if(send_high != send_high_prev){
+      if(send_high){
+        AD.setFrequency(MD_AD9833::CHAN_0,frequency_high);
+        //Serial.print("1");
+        //digitalWrite(8, HIGH);
+      } else {
+        AD.setFrequency(MD_AD9833::CHAN_0,frequency_low);
+        //Serial.print("0");
+        //digitalWrite(8, LOW);
+      }
+    //}
+    //Serial.println(" ");
     send_high_prev = send_high;
-    while(sendBit < bit_speed);
-    sendBit = sendBit - bit_speed;
+    while(sendBit < bit_period);
+    sendBit = sendBit - bit_period;
   }
   //Serial.print("\n");
 }
