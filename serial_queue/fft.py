@@ -4,29 +4,40 @@ from matplotlib import pyplot as plt
 
 import pandas as pd
 
-df = pd.read_csv('64_94k____sampleK_250_all_G.txt', sep=' ', header=None, names=['Timestamp', 'Data'])
+if __name__ == '__main__':
 
-df['Data'].to_csv("testing.csv")
-data = df['Data'].to_numpy()
+    df = pd.read_csv("60_80k____sampleK_450_00111100.txt", header=None, names=['Data'])
 
-data_to_fft = data[:]
-data_size = data_to_fft.size
-freqs = fft.fftfreq(data_size, 1/250000)
-data_fft = np.abs(fft.fft(data_to_fft))
+    df['Data'].to_csv("testing.csv")
+    data = df['Data'].to_numpy()
 
-# freqs = fft.fftshift(freqs)
-# data_fft = fft.fftshift(data_fft)
+    bit = 2
+    samplePerBit = 2250
+    start = 1866200
+    data_to_fft = data[2000000:2590000] #<
+    #data_to_fft = data[start + (bit -1)*2250:start + bit*samplePerBit] #<
+    #data_to_fft = data[1546000:2128000] #G
+    #data_to_fft = data[675780:955000] #half
+    #data_to_fft = data[868822:1148460] #quarter
+    data_size = data_to_fft.size
+    freqs = fft.fftfreq(data_size, 1/450000)
+    data_fft = np.abs(fft.fft(data_to_fft))
 
-# freqs = freqs[10:data_size//2]
-# data_fft = data_fft[10:data_size//2]
+    # freqs = fft.fftshift(freqs)
+    # data_fft = fft.fftshift(data_fft)
 
-print(data_fft)
+    # freqs = freqs[10:data_size//2]
+    # data_fft = data_fft[10:data_size//2]
 
-print(data_to_fft)
+    data_fft[np.argmax(data_fft)] = 0
 
-plt.subplot(2,1,1)
-plt.plot(data_to_fft)
+    print(data_fft)
 
-plt.subplot(2,1,2)
-plt.plot(freqs, data_fft)
-plt.show()
+    print(data_to_fft)
+
+    plt.subplot(2,1,1)
+    plt.plot(data_to_fft)
+
+    plt.subplot(2,1,2)
+    plt.plot(freqs, data_fft)
+    plt.show()

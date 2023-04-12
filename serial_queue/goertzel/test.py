@@ -4,19 +4,21 @@ import pandas as pd
 from goertzel_func import goertzel
 if __name__ == '__main__':
     # quick test
-    fileName = "60_80k____sampleK_250_all_G"
-    df = pd.read_csv(fileName + '.txt', sep=' ', header=None, names=['Timestamp', 'Data'])
+    fileName = "60_80k____sampleK_450_00111100"
+    df = pd.read_csv(fileName + '.txt', header=None, names=['Data'])
 
     df['Data'].to_csv("testing.csv")
     data = df['Data'].to_numpy()
 
     #sample data and scale down
-    transmission = data[325265:604750] / 1000
+    transmission = data[2005000:2590000] / 1000
     data_size = transmission.size
-    # print(data_size)
+    print(data_size)
+    print(transmission[0:50])
     # generating test signals
     #ADC Sample Rate
-    SAMPLE_RATE = 250000
+    SAMPLE_RATE = 450000
+    BITRATE = 200
     #actual sample rate (based on number of sample (data_size) and bit rate (200))
     actualSampleRate = int(data_size/(256/200))
     # print(actualSampleRate)
@@ -26,28 +28,35 @@ if __name__ == '__main__':
     detection = []
     bit = 1
     string = ""
-    #window size
-    WINDOW_SIZE = int(data_size / 256)
+    #window size 
+    # calculate samples/bit sample rate (samples/secs) / bitrate (bits/sec) = samples/bit
+    WINDOW_SIZE = int(SAMPLE_RATE / BITRATE)
     print(WINDOW_SIZE)
+    shift = -10
+    startIndex = 0
     while bit <= 256:
         #indices
         start = (bit - 1) * WINDOW_SIZE 
         end = bit * WINDOW_SIZE
-        '''
+        
         #calculate range of data to sample based on selected bit
         t = np.linspace(0, 1.28, data_size)[start:end]
-        '''
+        
         #mutiply by hamming window
         trans = transmission[start:end] * np.hamming(WINDOW_SIZE)
-        # print(transmission.size)
+        # print(trans.size)
 
         # applying Goertzel on those signals, and plotting results
         freqs, results = goertzel(trans, SAMPLE_RATE, (50000, 60000),  (70000, 80000))
-        """
+        
+        # print(freqs)
+        # print(results)
+        
         #Plotting
+        """
         pylab.subplot(2, 2, 1)
         pylab.title('Transmission of 32 bits, half 0 half 1, bit {}  0: 60kHz 1: 80kHz'.format(bit))
-        pylab.plot(t, transmission)
+        pylab.plot(t, trans)
 
         pylab.subplot(2, 2, 3)
         pylab.title('Goertzel Algo, freqency ranges : [50000, 60000] and [70000, 80000]')
@@ -70,8 +79,9 @@ if __name__ == '__main__':
         detection.append(tup)
         #iterate bit
         bit += 1
-    #print(detection)
-    #print(string)
+        # print(detection)
+        #print(string)
+        startIndex += shift
     with open('goertzel_results_' + fileName + '.txt', 'w') as f:
         f.write("bit, value, max detected freq, mag\n")
         for tup in detection:
@@ -113,3 +123,4 @@ if __name__ == '__main__':
     # pylab.ylim([0,100000])
 
     # pylab.show()
+    
