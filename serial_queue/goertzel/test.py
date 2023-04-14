@@ -17,7 +17,7 @@ if __name__ == '__main__':
     print(transmission[0:50])
     # generating test signals
     #ADC Sample Rate
-    SAMPLE_RATE = 450000
+    SAMPLE_RATE = 454000
     BITRATE = 200
     #actual sample rate (based on number of sample (data_size) and bit rate (200))
     actualSampleRate = int(data_size/(256/200))
