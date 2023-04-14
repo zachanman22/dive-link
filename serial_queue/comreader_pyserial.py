@@ -5,15 +5,15 @@ from pathlib import Path
 
 if __name__ == '__main__':
     baud = 200
-    sampleKhz = 450
+    sampleKhz = 400
     lower_freq_khz = 60
     upper_freq_khz = 80
-    seconds = 10
+    seconds = 8
     # message = '1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
-    message = 'all_00111100'
+    message = 'mystery2'
     comPort = 'COM5'
     location = 'lab'
-    note = '00111100'
+    note = 'gnd'
 
     date = datetime.now().date()
 
@@ -37,6 +37,7 @@ if __name__ == '__main__':
         time.sleep(3)
         ser.set_buffer_size(rx_size = 100000, tx_size = 100000)
         time.sleep(0.5)
+        serial_buffer = b''
         with open(filePath, 'w') as log:
             time.sleep(1)
             print("Serial ready")
@@ -47,23 +48,36 @@ if __name__ == '__main__':
             numberOfMessages = 500000*seconds
             ser.read(ser.in_waiting)
             while x < numberOfMessages:
-                newline = ser.read(ser.in_waiting)
-                newline = (newline.decode()).split('\n')
-                newline = [x for x in newline if len(x) > 0]
-                if len(newline) == 0:
-                    continue
-                if newline[0][0] != '?':
-                    newline[0] = previousMessage + newline[0]
-                if(newline[-1][-1] != '$'):
-                    previousMessage = newline.pop()
-                else:
-                    previousMessage = ''
-                # print(newline)
-                listOfStuff.extend(newline)
-                x= x+len(newline)
+
+                if ser.in_waiting > 0:
+                    data = ser.read(ser.in_waiting)
+                    serial_buffer = serial_buffer + data
+                if b'\n' in serial_buffer:  # split data line by line and store it in var
+                    newline = serial_buffer.split(
+                        b'\n')
+                    serial_buffer = newline[-1]
+                    newline = newline[:-1]
+                # newline = ser.read(ser.in_waiting)
+                # newline = (newline.decode()).split('\n')
+                # newline = [x for x in newline if len(x) > 0]
+                # if len(newline) == 0:
+                #     continue
+                # if newline[0][0] != '?':
+                #     newline[0] = previousMessage + newline[0]
+                # if(newline[-1][-1] != '$'):
+                #     previousMessage = newline.pop()
+                # else:
+                #     previousMessage = ''
+                    listOfStuff.extend(newline)
+                    x= x+len(newline)
+            # print(listOfStuff)
+            
+
             print("Microseconds per message: ", (time.time()-firstTime)/numberOfMessages*1000000)
             print("Total time: ", time.time()-firstTime)
+            listOfStuff = [j.decode() for j in listOfStuff]
             # cut out the amount of the first serial buffer
+            # print(listOfStuff[0:10])
             posToCut = 0
             for i in range(20, len(listOfStuff)):
                 if int(listOfStuff[i][1:-1].split(' ')[0]) - int(listOfStuff[i-1][1:-1].split(' ')[0]) > 50:
@@ -72,20 +86,22 @@ if __name__ == '__main__':
                     break
             listOfStuff = listOfStuff[posToCut+20:]
 
+            # print(listOfStuff[0:10])
             # remove duplicates
-            x = 1
-            numDuplicates = 0
-            while x < len(listOfStuff):
-                if(listOfStuff[x] == listOfStuff[x-1]):
-                    listOfStuff.pop(x)
-                    numDuplicates += 1
-                else:
-                    x+=1
-            print("Number of duplicates removed: ", numDuplicates)
-
+            # x = 1
+            # numDuplicates = 0
+            # while x < len(listOfStuff):
+            #     if(listOfStuff[x] == listOfStuff[x-1]):
+            #         listOfStuff.pop(x)
+            #         numDuplicates += 1
+            #     else:
+            #         x+=1
+            # print("Number of duplicates removed: ", numDuplicates)
+            #remove last value
+            listOfStuff.pop(-1)
             # save file
             for i in range(len(listOfStuff)):
-                log.write(listOfStuff[i][1:-1]+'\n')
+                log.write(listOfStuff[i][0:-1]+'\n')
             print("Saved to: ", filePath)
 
             
