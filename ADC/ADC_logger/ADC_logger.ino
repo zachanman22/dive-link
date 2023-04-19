@@ -28,6 +28,8 @@ const int sample_freq_period_us = 4;
 SPISettings spi_adc_settings(24000000, MSBFIRST, SPI_MODE0);
 int gainMultiplier = 1;
 
+uint16_t adc_code = 0;
+
 void setup()
 {
     pinMode(RELAY_SWITCH_PIN, INPUT);
@@ -77,7 +79,7 @@ void setup()
     /* Setup Multisynth 1 to 13.55311MHz (PLLB/45.5) */
     clockgen.setupPLL(SI5351_PLL_B, 16, 0, 1);
     Serial.println("Set Output #1 to 500kHz");
-    clockgen.setupMultisynth(1, SI5351_PLL_B, 800, 0, 1);
+    clockgen.setupMultisynth(1, SI5351_PLL_B, 1000, 0, 1);
   
     /* Multisynth 2 is not yet used and won't be enabled, but can be */
     /* Use PLLB @ 616.66667MHz, then divide by 900 -> 685.185 KHz */
@@ -182,12 +184,13 @@ void updateRelay(bool relayOn)
 // /////////////////////////Demodulation Functions/////////////////////////
 void demodTimerCallback()
 {
-    uint16_t adc_code = ADCRead();
 //    Serial.print(micros());
 //    Serial.printf(" ");
-    Serial.print(adc_code);
+    //Serial.printf("$\n?");
     //Serial.print(random(4096));
-    Serial.printf("$\n?");
+    Serial.println(adc_code);
+//      Serial.printf("%d\n",adc_code);
+      adc_code = ADCRead();
 }
 
 uint16_t ADCRead(void)

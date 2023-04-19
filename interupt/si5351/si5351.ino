@@ -35,8 +35,8 @@ void setup(void)
   /* Setup PLLB to fractional mode @400MHz (XTAL * 16 + 0/1) */
   /* Setup Multisynth 1 to 250kHz (PLLB/1600) div range(4-900)*/
   clockgen.setupPLL(SI5351_PLL_B, 16, 0, 1);
-  Serial.println("Set Output #1 to 500kHz");
-  clockgen.setupMultisynth(1, SI5351_PLL_B, 800, 0, 1);
+  Serial.println("Set Output #1 to 400kHz");
+  clockgen.setupMultisynth(1, SI5351_PLL_B, 1000, 0, 1);
 
   /* Multisynth 2 is not yet used and won't be enabled, but can be */
   /* Use PLLB @ 616.66667MHz, then divide by 900 -> 685.185 KHz */
@@ -64,7 +64,7 @@ int counter = 0;
 /**************************************************************************/
 void loop(void)
 {
-if (counter % 500000 == 0){
+if (counter % 400000 == 0){
   Serial.println(counter);
   Serial.println(millis());
   Serial.println();

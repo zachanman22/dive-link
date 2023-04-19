@@ -18,7 +18,8 @@ const float LTC2315_vref = 4.096;
 /////////////////////////Shared Functions/////////////////////////
 elapsedMicros checkTimer;
 uint64_t counter;
-const int sample_freq_period_us = 5;
+//250kHz sample rate
+const int sample_freq_period_us = 4;
 SPISettings spi_adc_settings(24000000, MSBFIRST, SPI_MODE0);
 int gainMultiplier = 1;
 
@@ -30,7 +31,7 @@ void setup()
     pinMode(G0_PIN, OUTPUT);
     pinMode(G1_PIN, OUTPUT);
     pinMode(G2_PIN, OUTPUT);
-    setGain(1);
+    setGain(0);
     digitalWriteFast(adc_cs_pin, HIGH);
 
     // begin the SPI to communicate with the LTC2315-12

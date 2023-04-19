@@ -10,10 +10,10 @@ if __name__ == '__main__':
     upper_freq_khz = 80
     seconds = 8
     # message = '1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
-    message = 'mystery2'
+    message = '?'
     comPort = 'COM5'
     location = 'lab'
-    note = 'gnd'
+    note = 'test'
 
     date = datetime.now().date()
 
@@ -37,7 +37,9 @@ if __name__ == '__main__':
         time.sleep(3)
         ser.set_buffer_size(rx_size = 100000, tx_size = 100000)
         time.sleep(0.5)
-        serial_buffer = b''
+        # serial_buffer = b''
+        #improved version
+        serial_buffer = bytearray()
         with open(filePath, 'w') as log:
             time.sleep(1)
             print("Serial ready")
@@ -50,8 +52,7 @@ if __name__ == '__main__':
             while x < numberOfMessages:
 
                 if ser.in_waiting > 0:
-                    data = ser.read(ser.in_waiting)
-                    serial_buffer = serial_buffer + data
+                    serial_buffer += ser.read(ser.in_waiting)
                 if b'\n' in serial_buffer:  # split data line by line and store it in var
                     newline = serial_buffer.split(
                         b'\n')

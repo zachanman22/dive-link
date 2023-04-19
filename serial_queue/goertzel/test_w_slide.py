@@ -35,7 +35,7 @@ def find_start(data, start_at, freq_range:tuple, threshold, win_len, fs):
 
 if __name__ == '__main__':
     # quick test
-    fileName = "60_80k____sampleK_450_00111100"
+    fileName = "60_80k____sampleK_400_queue_faster"
     df = pd.read_csv(fileName + '.txt', header=None, names=['Data'])
 
     df['Data'].to_csv("testing.csv")
@@ -43,14 +43,15 @@ if __name__ == '__main__':
 
     #sample data and scale down
     transmission = data / 1000
-    plt.plot(transmission)
-    plt.show()
+    #plot
+    # plt.plot(transmission)
+    # plt.show()
     data_size = transmission.size
-    print(data_size)
-    print(transmission[0:50])
+    # print(data_size)
+    # print(transmission[0:50])
     # generating test signals
     #ADC Sample Rate
-    SAMPLE_RATE = 454000
+    SAMPLE_RATE = 400000
     BITRATE = 200
     #actual sample rate (based on number of sample (data_size) and bit rate (200))
     actualSampleRate = int(data_size/(256/200))
@@ -63,12 +64,12 @@ if __name__ == '__main__':
     #window size 
     # calculate samples/bit sample rate (samples/secs) / bitrate (bits/sec) = samples/bit
     WINDOW_SIZE = int(SAMPLE_RATE / BITRATE)
-    print(WINDOW_SIZE)
+    # print(WINDOW_SIZE)
     shift = int(WINDOW_SIZE / 4)
 
     decode_index = 0
     while decode_index < data_size - WINDOW_SIZE:
-        start_index = find_start(transmission, decode_index, (50000, 60000), 100, int(WINDOW_SIZE / 4), SAMPLE_RATE)
+        start_index = find_start(transmission, decode_index, (50000, 60000), 100, int(WINDOW_SIZE / 20), SAMPLE_RATE)
         if(start_index > data_size - WINDOW_SIZE):
             break
         print(start_index)
@@ -77,7 +78,7 @@ if __name__ == '__main__':
         while bit <= 256 and decode_index < data_size - WINDOW_SIZE:
             #indices
             start = start_index + (bit - 1) * WINDOW_SIZE + shift
-            end = start_index + bit * WINDOW_SIZE - shift
+            end = start_index + bit * WINDOW_SIZE - 2 * shift
             
             #calculate range of data to sample based on selected bit
             # t = np.linspace(0, 1.28, data_size)[start:end]

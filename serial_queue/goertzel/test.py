@@ -4,20 +4,25 @@ import pandas as pd
 from goertzel_func import goertzel
 if __name__ == '__main__':
     # quick test
-    fileName = "60_80k____sampleK_450_00111100"
+    fileName = "60_80k____sampleK_450_11000110_no1secDelay"
+    note = 'mid_1-2'
     df = pd.read_csv(fileName + '.txt', header=None, names=['Data'])
 
     df['Data'].to_csv("testing.csv")
     data = df['Data'].to_numpy()
 
     #sample data and scale down
-    transmission = data[2005000:2590000] / 1000
+    transmission = data[1879000:] / 1000
     data_size = transmission.size
     print(data_size)
     print(transmission[0:50])
     # generating test signals
     #ADC Sample Rate
+<<<<<<< Updated upstream
     SAMPLE_RATE = 454000
+=======
+    SAMPLE_RATE = 454164
+>>>>>>> Stashed changes
     BITRATE = 200
     #actual sample rate (based on number of sample (data_size) and bit rate (200))
     actualSampleRate = int(data_size/(256/200))
@@ -32,18 +37,19 @@ if __name__ == '__main__':
     # calculate samples/bit sample rate (samples/secs) / bitrate (bits/sec) = samples/bit
     WINDOW_SIZE = int(SAMPLE_RATE / BITRATE)
     print(WINDOW_SIZE)
-    shift = -10
+    SAMPLE_SIZE = WINDOW_SIZE // 2
+    shift = (WINDOW_SIZE // 4)
     startIndex = 0
     while bit <= 256:
         #indices
-        start = (bit - 1) * WINDOW_SIZE 
-        end = bit * WINDOW_SIZE
+        start = (bit - 1) * WINDOW_SIZE + shift
+        end = start + SAMPLE_SIZE
         
         #calculate range of data to sample based on selected bit
         t = np.linspace(0, 1.28, data_size)[start:end]
         
         #mutiply by hamming window
-        trans = transmission[start:end] * np.hamming(WINDOW_SIZE)
+        trans = transmission[start:end] * np.hamming(SAMPLE_SIZE)
         # print(trans.size)
 
         # applying Goertzel on those signals, and plotting results
@@ -82,14 +88,14 @@ if __name__ == '__main__':
         # print(detection)
         #print(string)
         startIndex += shift
-    with open('goertzel_results_' + fileName + '.txt', 'w') as f:
-        f.write("bit, value, max detected freq, mag\n")
-        for tup in detection:
-            f.write(','.join(map(str, tup)))
-            f.write('\n')
-        f.write("Recorded Data\n")
-        f.write(string)
-        f.close()
+with open('goertzel_results_' + fileName + note + '.txt', 'w') as f:
+    f.write("bit, value, max detected freq, mag\n")
+    for tup in detection:
+        f.write(','.join(map(str, tup)))
+        f.write('\n')
+    f.write("Recorded Data\n")
+    f.write(string)
+    f.close()
     # # generating test signals
     # SAMPLE_RATE = 250000
     # WINDOW_SIZE = 1024

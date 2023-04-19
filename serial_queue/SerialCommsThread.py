@@ -12,7 +12,8 @@ class SerialCommsThread(threading.Thread):
         self.port = port
         self.baudrate = baudrate
         self.serial_port = serial.Serial(port, baudrate)
-        self.serial_buffer = b''
+        # self.serial_buffer = b''
+        self.serial_buffer = bytearray()
         self.add_new_line_to_transmit = add_new_line_to_transmit
         self.should_stop = False
         self.messageEndToken = messageEndToken
@@ -133,10 +134,10 @@ if __name__ == "__main__":
     upper_freq_khz = "80"
     seconds = round(elapsed,3)
     # message = '1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
-    message = 'mystery'
+    message = '?'
     comPort = 'COM5'
     location = 'lab'
-    note = 'queue'
+    note = 'queue_faster'
 
     date = datetime.now().date()
 
@@ -159,6 +160,8 @@ if __name__ == "__main__":
         for i in range(len(list)):
             log.write(str(list[i]) +'\n')
         print("Saved to: ", filePath)
+
+    external_serial_thread.stop()
 
     # # read serial data from the queue
     # while True:
