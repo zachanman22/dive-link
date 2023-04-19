@@ -57,9 +57,6 @@ class SerialCommsThread(threading.Thread):
                 newline = newline[:-1]
                 #add to queue
                 self.received_queue.put(newline)
-                # adds vals to queue one at a time
-                # for val in newline:
-                #     self.received_queue.put(val)
 
     def restart_serial_port_on_failure(self):
         # close port if it needs to be closed
@@ -200,12 +197,6 @@ class SlideWinThread(threading.Thread):
                     while (count < start_window):
                         receive = self.received_queue.get()
                         data = np.array([int(x.decode('utf-8')) for x in receive])
-                        # data = np.array([int(receive.decode('utf-8'))])
-                        # data[:,0] = "".join()
-                        # print("receive", receive)
-                        # print("Data.shape:",data.hape)
-                        # print("Data:",data)
-                        # time.sleep(1)
                         fullData = np.concatenate((fullData,data))
                         count += data.size
                     # print(count)
@@ -230,7 +221,6 @@ class SlideWinThread(threading.Thread):
                         while (count < size):
                             receive = self.received_queue.get()
                             data = np.array([int(x.decode('utf-8')) for x in receive])
-                            # data = np.array([int(receive.decode('utf-8'))])
                             fullData = np.concatenate((fullData,data))
                             count += data.size
                         # print(count)
