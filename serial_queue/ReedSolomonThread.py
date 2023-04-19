@@ -21,6 +21,7 @@ class ReedSolomonThread(threading.Thread):
         # check if there is data in the "to transmit queue" to send to the serial port
         if not self.input_queue.empty():
             data = self.input_queue.get()
+            print(data)
             data = [data[8*i:8*(i+1)] for i in range(int(len(data)/8))]
             data = [int(i, 2) for i in data]
             for i in range(self.ecc_bytes):

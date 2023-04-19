@@ -47,8 +47,9 @@ class SerialCommsThread(threading.Thread):
             data = self.serial_port.read(
                 self.serial_port.in_waiting)
             self.serial_buffer = self.serial_buffer + data
-            print(self.messageEndToken in self.serial_buffer)
+            # print(self.messageEndToken in self.serial_buffer)
             if self.messageEndToken in self.serial_buffer:  # split data line by line and store it in var
+                # print(self.serial_buffer)
                 newline = self.serial_buffer.split(
                         self.messageEndToken)
                 # newline = re.split('\r\n|\r',self.serial_buffer)
@@ -56,6 +57,9 @@ class SerialCommsThread(threading.Thread):
                 newline = newline[:-1]
                 #add to queue
                 self.received_queue.put(newline)
+                # adds vals to queue one at a time
+                # for val in newline:
+                #     self.received_queue.put(val)
 
     def restart_serial_port_on_failure(self):
         # close port if it needs to be closed
@@ -119,8 +123,9 @@ class SlideWinThread(threading.Thread):
         # print("Connected to serial port ", port)
     
     def find_start(self, data, freq_range:tuple, threshold, fs):
-
-        freqs, results = goertzel(data, fs, freq_range)
+        norm_samples = 2 * (data) / (np.max(data)) - 1
+        # print(norm_samples)
+        freqs, results = goertzel(norm_samples, fs, freq_range)
 
         #freqs is array of examined freqs; mag is array of results for said freqs
         mag = np.array(results)[:,2]
@@ -148,8 +153,8 @@ class SlideWinThread(threading.Thread):
         WINDOW_SIZE = int(SAMPLE_RATE / BITRATE)
         # print(WINDOW_SIZE)
         shift = int(WINDOW_SIZE / 4)
-        plt.plot(transmission)
-        plt.show()
+        print(transmission)
+        transmission = 2 * (transmission) / (np.max(transmission)) - 1
         while bit <= 256:
             #indices
             start = (bit - 1) * WINDOW_SIZE + shift
@@ -184,14 +189,18 @@ class SlideWinThread(threading.Thread):
         while not self.should_stop:
             if self.status == self.RUNNING:
                 try:
-                    #get 100 data points from serial
+                    #get start_window amount data points from serial
+                    threshold = 30
+                    start_window = 100
                     size = int (self.fs // self.bitrate * 256)
                     count = 0
                     fullData = np.array([])
-                    print("sliding window")
-                    while (count < 100):
+
+                    # print("sliding window")
+                    while (count < start_window):
                         receive = self.received_queue.get()
                         data = np.array([int(x.decode('utf-8')) for x in receive])
+                        # data = np.array([int(receive.decode('utf-8'))])
                         # data[:,0] = "".join()
                         # print("receive", receive)
                         # print("Data.shape:",data.hape)
@@ -199,18 +208,34 @@ class SlideWinThread(threading.Thread):
                         # time.sleep(1)
                         fullData = np.concatenate((fullData,data))
                         count += data.size
+                    # print(count)
+
+                    start_goertzel_bool = False
+                    find_start_counter = 0
+                    find_hop_length = 100
+                    while not start_goertzel_bool and find_start_counter * find_hop_length + start_window < fullData.size:
+                        one_hundred_samps = fullData[find_start_counter * find_hop_length:find_start_counter * find_hop_length + start_window]
+                        start_goertzel_bool = self.find_start(one_hundred_samps, (50000,60000), threshold, self.fs)
+                        find_start_counter += 1
+
+                    # Get just the data that triggers the threshold
+                    # Set the count to the length of this data
+                    fullData = fullData[find_start_counter * find_hop_length:]
+                    count = fullData.size
                     # print(fullData)
                     # sliding Window
-                    if(self.find_start(fullData/1000, (50000,60000), 200, self.fs)):
+                    if(start_goertzel_bool):
                         print("starting goertzel")
                         #get the rest of the data frame
                         while (count < size):
                             receive = self.received_queue.get()
                             data = np.array([int(x.decode('utf-8')) for x in receive])
+                            # data = np.array([int(receive.decode('utf-8'))])
                             fullData = np.concatenate((fullData,data))
                             count += data.size
+                        # print(count)
                         #goertzel
-                        fullData = fullData / 1000
+                        fullData = fullData
                         self.goertzel2bits(fullData)
                 except Exception as e:
                     print(e)
