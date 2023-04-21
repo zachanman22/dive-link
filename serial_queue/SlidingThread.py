@@ -50,8 +50,8 @@ class SerialCommsThread(threading.Thread):
             # print(self.messageEndToken in self.serial_buffer)
             if self.messageEndToken in self.serial_buffer:  # split data line by line and store it in var
                 # print(self.serial_buffer)
-                newline = self.serial_buffer.split(
-                        self.messageEndToken)
+                newline = self.serial_buffer.split(self.messageEndToken)
+                # newline = self.serial_buffer.splitlines()
                 # newline = re.split('\r\n|\r',self.serial_buffer)
                 self.serial_buffer = newline[-1]
                 newline = newline[:-1]
@@ -102,7 +102,7 @@ class SerialCommsThread(threading.Thread):
         self.join()
 
 class SlideWinThread(threading.Thread):
-    def __init__(self, received_queue=None, to_transmit_queue=None, fs=0, bitrate = 0):
+    def __init__(self, received_queue=None, to_transmit_queue=None, fs=0, bitrate = 0, messageSize = 0):
         super().__init__()
         self.received_queue = received_queue
         self.to_transmit_queue = to_transmit_queue
@@ -112,6 +112,9 @@ class SlideWinThread(threading.Thread):
         self.fs = fs
         #bitrate
         self.bitrate = bitrate
+        #prev magnitude (for sliding window)
+        self.prev = 100
+        self.messageSize = messageSize
         self.RUNNING = 0
         self.INITIALIZED = 1
         self.CRASHED = 2
@@ -129,12 +132,13 @@ class SlideWinThread(threading.Thread):
         # print(freqs)
         #find max mag and corresponding freq for each bit
         fft_start_amp = np.max(mag)
-        # print(mag)
         # print(fft_start_amp)
-        
-        if fft_start_amp > threshold:
+        #Look from transisition from no data (low mag) to data (high mag)
+        if fft_start_amp > threshold:# and self.prev < threshold:
             print(fft_start_amp)
+            #self.prev = fft_start_amp
             return True
+        #self.prev = fft_start_amp
         return False
     def goertzel2bits(self, transmission):
         #ADC Sample Rate
@@ -150,9 +154,11 @@ class SlideWinThread(threading.Thread):
         WINDOW_SIZE = int(SAMPLE_RATE / BITRATE)
         # print(WINDOW_SIZE)
         shift = int(WINDOW_SIZE / 4)
-        print(transmission)
+        #plot
+        # plt.plot(transmission)
+        # plt.show()
         transmission = 2 * (transmission) / (np.max(transmission)) - 1
-        while bit <= 256:
+        while bit <= self.messageSize:
             #indices
             start = (bit - 1) * WINDOW_SIZE + shift
             end = bit * WINDOW_SIZE - 2 * shift
@@ -189,7 +195,7 @@ class SlideWinThread(threading.Thread):
                     #get start_window amount data points from serial
                     threshold = 30
                     start_window = 100
-                    size = int (self.fs // self.bitrate * 256)
+                    size = int (self.fs // self.bitrate * self.messageSize)
                     count = 0
                     fullData = np.array([])
 
@@ -206,7 +212,7 @@ class SlideWinThread(threading.Thread):
                     find_hop_length = 100
                     while not start_goertzel_bool and find_start_counter * find_hop_length + start_window < fullData.size:
                         one_hundred_samps = fullData[find_start_counter * find_hop_length:find_start_counter * find_hop_length + start_window]
-                        start_goertzel_bool = self.find_start(one_hundred_samps, (50000,60000), threshold, self.fs)
+                        start_goertzel_bool = self.find_start(one_hundred_samps, (50000,80000), threshold, self.fs)
                         find_start_counter += 1
 
                     # Get just the data that triggers the threshold
@@ -249,7 +255,7 @@ if __name__ == "__main__":
     external_serial_thread.start()
 
     window_thread = SlideWinThread(
-        received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=200)
+        received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=200, messageSize = 128)
     window_thread.start()
 
     time.sleep(0.01)
