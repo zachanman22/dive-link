@@ -102,7 +102,7 @@ class SerialCommsThread(threading.Thread):
         self.join()
 
 class SlideWinThread(threading.Thread):
-    def __init__(self, received_queue=None, to_transmit_queue=None, fs=0, bitrate = 0, messageSize = 0):
+    def __init__(self, received_queue=None, to_transmit_queue=None, fs=400000, bitrate = 200, messageSize = 128):
         super().__init__()
         self.received_queue = received_queue
         self.to_transmit_queue = to_transmit_queue
@@ -135,7 +135,7 @@ class SlideWinThread(threading.Thread):
         # print(fft_start_amp)
         #Look from transisition from no data (low mag) to data (high mag)
         if fft_start_amp > threshold:# and self.prev < threshold:
-            print(fft_start_amp)
+            # print(fft_start_amp)
             #self.prev = fft_start_amp
             return True
         #self.prev = fft_start_amp
@@ -154,6 +154,7 @@ class SlideWinThread(threading.Thread):
         WINDOW_SIZE = int(SAMPLE_RATE / BITRATE)
         # print(WINDOW_SIZE)
         shift = int(WINDOW_SIZE / 4)
+        # shift = 0
         #plot
         # plt.plot(transmission)
         # plt.show()
@@ -185,6 +186,7 @@ class SlideWinThread(threading.Thread):
             #iterate bit
             bit += 1
         #add string to transmit queue
+        # print(string)
         self.to_transmit_queue.put(string)
 
     def run(self):
@@ -193,8 +195,9 @@ class SlideWinThread(threading.Thread):
             if self.status == self.RUNNING:
                 try:
                     #get start_window amount data points from serial
-                    threshold = 30
+                    threshold = 10
                     start_window = 100
+                    find_hop_length = 50
                     size = int (self.fs // self.bitrate * self.messageSize)
                     count = 0
                     fullData = np.array([])
@@ -209,10 +212,9 @@ class SlideWinThread(threading.Thread):
 
                     start_goertzel_bool = False
                     find_start_counter = 0
-                    find_hop_length = 100
                     while not start_goertzel_bool and find_start_counter * find_hop_length + start_window < fullData.size:
                         one_hundred_samps = fullData[find_start_counter * find_hop_length:find_start_counter * find_hop_length + start_window]
-                        start_goertzel_bool = self.find_start(one_hundred_samps, (50000,80000), threshold, self.fs)
+                        start_goertzel_bool = self.find_start(one_hundred_samps, (50000,60000), threshold, self.fs)
                         find_start_counter += 1
 
                     # Get just the data that triggers the threshold
@@ -222,7 +224,7 @@ class SlideWinThread(threading.Thread):
                     # print(fullData)
                     # sliding Window
                     if(start_goertzel_bool):
-                        print("starting goertzel")
+                        # print("starting goertzel")
                         #get the rest of the data frame
                         while (count < size):
                             receive = self.received_queue.get()
@@ -255,7 +257,7 @@ if __name__ == "__main__":
     external_serial_thread.start()
 
     window_thread = SlideWinThread(
-        received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=200, messageSize = 128)
+        received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=200, messageSize=64)
     window_thread.start()
 
     time.sleep(0.01)

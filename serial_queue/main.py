@@ -16,14 +16,12 @@ external_serial_thread = SerialCommsThread(
 external_serial_thread.start()
 
 window_thread = SlideWinThread(
-    received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=200)
+    received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=200, messageSize=64)
 window_thread.start()
 
 rs_thread = ReedSolomonThread(
-        ecc_bytes = 8, input_queue=to_RS_queue, output_queue=final_message_queue)
+        ecc_bytes = 4, input_queue=to_RS_queue, output_queue=final_message_queue)
 rs_thread.start()
-
-time.sleep(0.01)
 
 #Make a new thread to handle goertzel algorithm
 
@@ -33,6 +31,7 @@ time.sleep(0.01)
 # write data to the serial port by adding it to the main queue
 # main_data_queue.put(b"Hello world")
 # # read serial data from the queue
+
 while True:
     try:
         data = final_message_queue.get()
