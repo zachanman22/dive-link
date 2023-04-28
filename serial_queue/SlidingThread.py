@@ -214,7 +214,7 @@ class SlideWinThread(threading.Thread):
                     find_start_counter = 0
                     while not start_goertzel_bool and find_start_counter * find_hop_length + start_window < fullData.size:
                         one_hundred_samps = fullData[find_start_counter * find_hop_length:find_start_counter * find_hop_length + start_window]
-                        start_goertzel_bool = self.find_start(one_hundred_samps, (50000,60000), threshold, self.fs)
+                        start_goertzel_bool = self.find_start(one_hundred_samps, (53000,60000), threshold, self.fs)
                         find_start_counter += 1
 
                     # Get just the data that triggers the threshold
@@ -257,7 +257,7 @@ if __name__ == "__main__":
     external_serial_thread.start()
 
     window_thread = SlideWinThread(
-        received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=200, messageSize=64)
+        received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=400, messageSize=64)
     window_thread.start()
 
     time.sleep(0.01)

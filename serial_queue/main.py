@@ -1,5 +1,6 @@
 from SlidingThread import SerialCommsThread, SlideWinThread
 from ReedSolomonThread import ReedSolomonThread
+# from SlidingThreadwRS import SlideWinThread
 import queue
 import time
 
@@ -16,12 +17,16 @@ external_serial_thread = SerialCommsThread(
 external_serial_thread.start()
 
 window_thread = SlideWinThread(
-    received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=200, messageSize=64)
+    received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=800, messageSize=64)
 window_thread.start()
 
-rs_thread = ReedSolomonThread(
-        ecc_bytes = 4, input_queue=to_RS_queue, output_queue=final_message_queue)
-rs_thread.start()
+# window_thread = SlideWinThread(
+#     received_queue=from_external_data_queue, to_transmit_queue = to_RS_queue, fs=400000, bitrate=400, messageSize=64, eccBytes=4)
+# window_thread.start()
+
+# rs_thread = ReedSolomonThread(
+#         ecc_bytes = 4, input_queue=to_RS_queue, output_queue=final_message_queue)
+# rs_thread.start()
 
 #Make a new thread to handle goertzel algorithm
 
@@ -34,9 +39,10 @@ rs_thread.start()
 
 while True:
     try:
-        data = final_message_queue.get()
+        data = to_RS_queue.get()
+        data = [data[8*i:8*(i+1)] for i in range(int(len(data)/8))]
+        data = [int(i,2) for i in data]
+        data = bytearray(data).decode("utf-8")
         print(data)
-    except KeyboardInterrupt:
-        window_thread.stop()
-        external_serial_thread.stop()
-        break
+    except:
+        print("Too Noisy")
