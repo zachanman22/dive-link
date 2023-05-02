@@ -1,4 +1,5 @@
 # dive-link
+#Project by: Somil Joshi, Garrett Gularson, and Zachary Chan
 This is the GITHUB project for the DiveLink System. This system requires both transmitter and receiver boards produced by the Systems Research Lab at Georgia Tech. The system requires two Teensy boards, one for transmission and another for reception. To interface with these boards Arduino 1.8 is needed and the Teensy add-on imported in the program.
 
 For the transmission Teensy, use the Big_Transmit file. In this file, the transmission baud, Transmit ID, and Number of Transmitters must be correct for proper transmission. The wiring for the Transmitter is commented in this file.
